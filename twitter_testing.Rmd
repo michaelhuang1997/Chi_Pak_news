@@ -1,0 +1,47 @@
+---
+title: "twitter_testing"
+author: "Michael Huang"
+date: "2022-12-04"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(twitteR)
+library(tidyverse)
+library(ROAuth)
+library(streamR)
+library(digest)
+```
+
+```{r}
+setup_twitter_oauth("DonU0QGulacxyrmaW4JKgwLLT","P0OR4izESmpR4zkUM8oC3FriLilUjgutzg87E88BDl6uWGJmwl")
+```
+
+```{r}
+requestURL <- "https://api.twitter.com/oauth/request_token"
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+consumerKey <- "DonU0QGulacxyrmaW4JKgwLLT"
+consumerSecret <- "P0OR4izESmpR4zkUM8oC3FriLilUjgutzg87E88BDl6uWGJmwl"
+```
+
+```{r}
+my_oauth <- OAuthFactory$new(consumerKey = consumerKey, consumerSecret = consumerSecret, 
+    requestURL = requestURL, accessURL = accessURL, authURL = authURL)
+my_oauth$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+save(my_oauth, file = "/Users/michaelhuang/Desktop/my_oauth.Rdata")
+```
+
+```{r}
+load("/Users/michaelhuang/Desktop/my_oauth.Rdata")
+
+```
+
+```{r}
+tweets.df <- parseTweets("tweets.json", simplify = TRUE)
+```
+
