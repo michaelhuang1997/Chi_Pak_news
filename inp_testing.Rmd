@@ -1,0 +1,145 @@
+---
+title: "inp_webscraping_testing"
+author: "Michael Huang"
+date: "2022-11-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
+```
+
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(rvest)
+library(tidytext)
+library(purrr)
+library(xml2)
+library(plotly)
+library(stringr)
+library(widyr)
+library(ggraph)
+library(ragg)
+library(igraph)
+```
+
+```{r web scraping function}
+scrape_doc <- function(url){
+  df <- read_html(url)
+  title <- html_elements(x=df, css=".secondary_title") %>% # retrieve title
+    html_text2()
+  title <- title[1]
+  date <- html_elements(x= df, css = ".news_date") %>% # retrieve date
+    html_text2()
+  text <- html_elements(x = df, css = ".news_description") %>% # retrieve text
+  html_text2() 
+  url_data <- tibble(
+    date=date,
+    title=title,
+    text=text
+  )
+  return(url_data)
+}
+```
+
+```{r}
+url1 <- ("https://www.inp.net.pk/ur/news-detail/%D9%BE%D8%A7%DA%A9%D8%B3%D8%AA%D8%A7%D9%86/pakstan-chin-ki-aar-aim-bi-aor-rop-mi-tjart-alr-ko-zoal")
+url2 <- ("https://www.inp.net.pk/ur/news-detail/%D8%B4%D9%90%D9%86%DB%81%D9%88%D8%A7-%D9%BE%D8%A7%DA%A9%D8%B3%D8%AA%D8%A7%D9%86-%D8%B3%D8%B1%D9%88%D8%B3/chin-ookishnl-aijokishn-k-li-aik-rol-mal-aerikr-ioniskoaafs-bijng")
+url3 <- ("https://www.inp.net.pk/ur/news-detail/%D8%A8%DB%8C%D9%86-%D8%A7%D9%82%D9%88%D8%A7%D9%85%DB%8C/asraeil-n-smndr-s-kdrti-gis-nkaln-kile-ktri-kmpni-ko-ajazt-d-di")
+url4 <- ("https://www.inp.net.pk/ur/news-detail/%D8%A8%DB%8C%D9%86-%D8%A7%D9%82%D9%88%D8%A7%D9%85%DB%8C/kinia-khaton-piramik-ro-hadth-mi-zkhmi-bii-ko-n-pchan-paei")
+url5 <- ("https://www.inp.net.pk/ur/news-detail/%D9%BE%D8%A7%DA%A9-%D8%B3%D8%B9%D9%88%D8%AF%DB%8C-%D8%B3%D8%B1%D9%88%D8%B3/%D8%AF%D9%88%D9%86%D9%88%DA%BA%20%D8%B1%DB%81%D9%86%D9%85%D8%A7%D8%A4%DA%BA%20%D9%86%DB%92%20%D8%B9%D9%84%D8%A7%D9%82%D8%A7%D8%A6%DB%8C%20%D9%88%20%D8%A8%DB%8C%D9%86%20%D8%A7%D9%84%D8%A7%D9%82%D9%88%D8%A7%D9%85%DB%8C%20%D8%AD%D8%A7%D9%84%D8%A7%D8%AA%20%D8%AD%D8%A7%D8%B6%D8%B1%DB%81%20%D8%A7%D9%88%D8%B1%20%D8%B1%D9%88%D9%86%D9%85%D8%A7%20%DB%81%D9%88%D9%86%DB%92%20%D9%88%D8%A7%D9%84%DB%8C%20%D8%A7%DB%81%D9%85%20%D8%AA%D8%A8%D8%AF%DB%8C%D9%84%DB%8C%D9%88%DA%BA%20%DA%A9%D8%A7%20%D8%AC%D8%A7%D8%A6%D8%B2%DB%81%20%D9%84%DB%8C%D8%A7%D8%8C%20%D8%A7%D9%85%D9%86%20%D9%88%20%D8%A7%D8%B3%D8%AA%D8%AD%DA%A9%D8%A7%D9%85%20%D9%82%D8%A7%D8%A6%D9%85%20%DA%A9%D8%B1%D9%86%DB%92%20%DA%A9%DB%92%20%D9%84%DB%8C%DB%92%20%DA%A9%DB%8C%20%D8%AC%D8%A7%D9%86%DB%92%20%D9%88%D8%A7%D9%84%DB%8C%20%DA%A9%D9%88%D8%B4%D8%B4%D9%88%DA%BA%20%D9%BE%D8%B1%20%D8%A8%DA%BE%DB%8C%20%D8%A8%D8%A7%D8%AA%20%DA%86%DB%8C%D8%AA%20%DA%A9%DB%8C")
+url6 <- ("https://www.inp.net.pk/ur/news-detail/%D9%BE%D8%A7%DA%A9-%D8%B3%D8%B9%D9%88%D8%AF%DB%8C-%D8%B3%D8%B1%D9%88%D8%B3/%DB%81%DB%8C%DA%A9%D8%B1%D8%B2-%D8%B3%DB%92-%D8%AE%D8%B7%D8%B1%DB%81%D8%8C-%D8%A8%D8%B1%D8%B7%D8%A7%D9%86%DB%8C%DB%81-%D9%85%DB%8C%DA%BA-%D9%86%D8%A6%DB%92-%D9%88%D8%B2%DB%8C%D8%B1%D8%A7%D8%B9%D8%B8%D9%85-%DA%A9%D8%A7-%D8%A7%D9%86%D8%AA%D8%AE%D8%A7%D8%A8-%D8%AA%D8%A7%D8%AE%DB%8C%D8%B1-%DA%A9%D8%A7-%D8%B4%DA%A9%D8%A7%D8%B1")
+url7 <- ("https://www.inp.net.pk/ur/news-detail/%D9%BE%D8%A7%DA%A9-%D8%B3%D8%B9%D9%88%D8%AF%DB%8C-%D8%B3%D8%B1%D9%88%D8%B3/%D9%BE%D8%A7%DA%A9%D8%B3%D8%AA%D8%A7%D9%86-%D8%B3%D8%B9%D9%88%D8%AF%DB%8C-%D8%B9%D8%B1%D8%A8-%D8%AA%D8%AC%D8%A7%D8%B1%D8%AA%DB%8C-%D8%8C%D9%85%D8%B9%D8%A7%D8%B4%DB%8C-%D8%AA%D8%B9%D9%84%D9%82%D8%A7%D8%AA-%DA%A9%DB%8C-%D9%85%D8%B2%DB%8C%D8%AF-%D8%A8%DB%81%D8%AA%D8%B1%DB%8C-%DA%A9%DB%8C%D9%84%D8%A6%DB%92-%D8%B1%D9%88%DA%88-%D9%85%DB%8C%D9%BE-%D8%A8%D9%86%D8%A7-%D9%86%DB%92-%DA%A9%D8%A7%DB%8C%DB%81-%D8%A8%DB%81%D8%AA%D8%B1%DB%8C%D9%86-%D9%88%D9%82%D8%AA-%DB%81%DB%92%D8%8C%D9%88%D8%B2%DB%8C%D8%B1%D9%90-%D8%A7%D8%B9%D8%B8%D9%85")
+url8 <- ("https://www.inp.net.pk/ur/news-detail/%D8%B4%D9%90%D9%86%DB%81%D9%88%D8%A7-%D9%BE%D8%A7%DA%A9%D8%B3%D8%AA%D8%A7%D9%86-%D8%B3%D8%B1%D9%88%D8%B3/chin-aor-pakstan-taaaon-aafat-ki-rok-tam-aor-tkhfif-k-shaab-mi-mzid-gra-o-gia")
+url_list <- c(url1,url2,url3,url4,url5,url6,url7,url8)
+```
+
+```{r}
+datalist = vector("list", length = 9) 
+for (i in seq_along(url_list)){
+  datalist[[i]] <- scrape_doc(url_list[[i]])
+}
+inp <- do.call(rbind, datalist)
+inp
+```
+
+```{r dev='ragg_png'}
+stopwords <- read.delim("/Users/michaelhuang/Dropbox/Projects/Chinese_news_pak/inp/stopwords-ur.txt")
+cleaned_df <- inp %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stopwords, by="word")
+
+words_by_title <- cleaned_df %>% 
+  count(title,word, sort=TRUE) %>% 
+  ungroup()
+```
+
+```{r dev='ragg_png'}
+title_word_pairs <- words_by_title %>% 
+  pairwise_count(word, title, n, sort=TRUE, upper=FALSE)
+
+set.seed(1234)
+
+title_word_pairs %>%
+  filter(n >= 36) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "cyan4") +
+  geom_node_point(size = 3) +
+  geom_node_text(aes(label = name), repel = TRUE, 
+                 point.padding = unit(0.2, "lines")) +
+  theme_void()
+```
+
+```{r dev='ragg_png'}
+title_cors <- words_by_title %>% 
+  pairwise_cor(title, word, n, sort=TRUE)
+
+set.seed(2007)
+
+title_cors %>% 
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation, edge_width = correlation, color="cyan4")) +
+  geom_node_point(size = 3, color = "lightblue") +
+  geom_node_text(aes(label = name), size=2.5, repel = TRUE) +
+  theme_void()
+```
+
+```{r}
+inp_dtm <- cleaned_df %>%
+  unite(document, title) %>%
+  count(document, word) %>%
+  cast_dtm(document, word, n)
+```
+
+```{r}
+inp_lda <- LDA(inp_dtm, k = 7, control = list(seed = 2016))
+```
+
+```{r  dev='ragg_png'}
+inp_topics <- tidy(inp_lda, matrix = "beta")
+top_terms <- inp_topics %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 5) %>% 
+  ungroup() %>%
+  arrange(topic, -beta)
+top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(beta, term, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  scale_y_reordered()
+```
+
+```{r}
+inp_bigrams <- inp %>%
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
+  filter(!is.na(bigram)) 
+inp_bigrams %>%
+  count(bigram, sort = TRUE)
+bigrams_separated <- inp_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+```
+
