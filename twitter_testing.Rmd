@@ -15,32 +15,31 @@ library(rjson)
 library(jsonlite)
 library(tidyverse)
 library(ROAuth)
-library(streamR)
-library(digest)
 ```
 
 ```{r}
-my_oauth <- list(consumer_key = "AuWLI4cFncTAcZ9th8aWSUKfd",
-   consumer_secret = "HyQXYx0lnPnBXckEb00tIoX7XZG1YOA1gKEPldhX20Wp0PsG3i",
-   access_token="3442624097-yq09ZtH0GNY5wH2QA4nYeLVPiAYGG6btNKxZK1f",
-   access_token_secret = "Mg6MZSOKfEiUTEeFrXGtSwAKdc2k5mHWOqm9TBwEcZrbS")
-save(my_oauth, file = "my_oauth.Rdata")
+reqURL <- "https://api.twitter.com/oauth/request_token"
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+consumer_key <- "JcrxIFV9qiPsEERpTQtwnwdQl"
+consumer_secret <- "xuHfLGXnHzOBQA3duwxsXPBx0e4uXeZxqAqTsYvY25y4FDFX7U"
+access_token <- "3442624097-s4Wyi9bCEFPoYA6yEegHP6XvZRuFgFWAAqwU4rE"
+access_secret <- "z7UYfJCef6DgyKp8tizEljmQDjvrfvfjmooBsOvZ9tGdD"
 ```
 
 ```{r}
-load("my_oauth.Rdata")
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 ```
 
 ```{r}
-filterStream(file.name="pak_streaming_tweets.json", track="Pakistan", 
-    timeout=60000, oauth=my_oauth)
-
-filterStream("tweets.json", track = c("Obama", "Biden"), timeout = 120, 
-  oauth = my_oauth)
+tweets1 <- searchTwitter("XinhuaUrdu", n=1000)
+df <- twListToDF(tweets1)
 ```
 
 ```{r}
-tweets <- parseTweets("pak_streaming_tweets.json")
+tweets2 <- searchTwitter("xinhua_hindi", n=1000, since= "2022-10-08", until = "2022-12-10")
+df2 <- twListToDF(tweets2)
 ```
+
 
 
