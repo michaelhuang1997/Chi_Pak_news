@@ -12,7 +12,7 @@ auth = tw.OAuthHandler(consumer_api_key, consumer_api_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tw.API(auth, wait_on_rate_limit=True)
 
-search_words="trump"
+search_words="pakistan"
 since = "2000-01-01"
 until="2020-08-20"
 tweets = tw.Cursor(api.search_tweets,

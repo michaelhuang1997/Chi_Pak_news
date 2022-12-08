@@ -6,12 +6,13 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = F)
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 ```
 
 ```{r}
 library(twitteR)
 library(rjson)
+library(tidytext)
 library(jsonlite)
 library(tidyverse)
 library(ROAuth)
@@ -32,14 +33,53 @@ setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 ```
 
 ```{r}
-tweets1 <- searchTwitter("XinhuaUrdu", n=1000)
+tweets1 <- searchTwitter("XinhuaUrdu", n=1000, since= "2022-10-08", until = "2022-12-10")
 df <- twListToDF(tweets1)
+write_csv(df, "xinhua_urd.csv")
 ```
+
+```{r}
+urd_stopwords <- read.delim("stopwords-ur.txt")
+hin_stopwords <- read.delim("hindi_stopwords.txt")
+```
+
+```{r dev='ragg_png'}
+df %>% 
+  select(text) %>% 
+  unnest_tokens(word, text)%>% 
+  anti_join(urd_stopwords, by="word") %>% 
+  filter(!str_detect(word,"[a-z]"), !str_detect(word, "[0-9]")) %>% 
+  count(word, sort = TRUE) %>% 
+   filter(n > 6) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col()
+```
+
 
 ```{r}
 tweets2 <- searchTwitter("xinhua_hindi", n=1000, since= "2022-10-08", until = "2022-12-10")
 df2 <- twListToDF(tweets2)
+write_csv(df2,"xinhua_hin.csv")
 ```
 
+```{r dev='ragg_png'}
+df2 %>% 
+  select(text) %>% 
+  unnest_tokens(word, text)%>% 
+  anti_join(hin_stopwords, by="word") %>% 
+  filter(!str_detect(word,"[a-z]"), !str_detect(word, "[0-9]")) %>% 
+  count(word, sort = TRUE) %>% 
+   filter(n > 5) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col()
+```
+
+```{r}
+tweets3 <- searchTwitter("CathayPak", n=10000, since= "2010-10-08", until = "2022-12-10")
+df3 <- twListToDF(tweets3)
+write_csv(df3,"chi_emb_pak.csv")
+```
 
 
